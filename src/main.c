@@ -5,6 +5,8 @@
 
 #include "uiohook.h"
 
+volatile int mouse_x      = 0;
+volatile int mouse_y      = 0;
 volatile bool is_clicking = false;
 volatile bool is_running  = true;
 
@@ -29,7 +31,15 @@ void* clicker_thread(void* arg)
 
 void listener(uiohook_event* const event)
 {
-   if (event->type == EVENT_KEY_PRESSED) {
+   switch (event->type) {
+   case EVENT_MOUSE_MOVED:
+   case EVENT_MOUSE_DRAGGED: {
+      mouse_x = event->data.mouse.x;
+      mouse_y = event->data.mouse.y;
+      printf("[MOUSE MOVED] (X,Y) : (%d,%d)\n", mouse_x, mouse_y);
+   } break;
+
+   case EVENT_KEY_PRESSED: {
       if (event->data.keyboard.keycode == VC_F5) {
          is_clicking = !is_clicking;
          printf("[STATUS] %s\n", (is_clicking) ? "CLICKING NOW" : "STOPPED CLICKING");
@@ -41,6 +51,11 @@ void listener(uiohook_event* const event)
          is_running = false;
          hook_stop();
       }
+   } break;
+
+   default: {
+      /* NOTHING */
+   } break;
    }
 }
 
