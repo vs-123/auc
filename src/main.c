@@ -16,6 +16,8 @@ void* clicker_thread(void* arg)
       if (is_clicking) {
          uiohook_event event     = { .type = EVENT_MOUSE_PRESSED };
          event.data.mouse.button = 1;
+         event.data.mouse.x = mouse_x;
+         event.data.mouse.y = mouse_y;
          hook_post_event(&event);
          event.type = EVENT_MOUSE_RELEASED;
          hook_post_event(&event);
@@ -36,11 +38,10 @@ void listener(uiohook_event* const event)
    case EVENT_MOUSE_DRAGGED: {
       mouse_x = event->data.mouse.x;
       mouse_y = event->data.mouse.y;
-      printf("[MOUSE MOVED] (X,Y) : (%d,%d)\n", mouse_x, mouse_y);
    } break;
 
    case EVENT_KEY_PRESSED: {
-      if (event->data.keyboard.keycode == VC_F5) {
+      if (event->data.keyboard.keycode == VC_F6) {
          is_clicking = !is_clicking;
          printf("[STATUS] %s\n", (is_clicking) ? "CLICKING NOW" : "STOPPED CLICKING");
          fflush(stdout);
@@ -65,7 +66,8 @@ int main(void)
    printf("#  AUC -- AUTO-CLICKER  #\n");
    printf("#########################\n");
    printf("\n");
-   printf("* PRESS F5 TO TOGGLE.\n");
+   printf("* AUTHOR: vs-123 @ https://github.com/vs-123\n");
+   printf("* PRESS F6 TO TOGGLE.\n");
 
    pthread_t thread_id;
    pthread_create(&thread_id, NULL, clicker_thread, NULL);
