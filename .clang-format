@@ -1,0 +1,4 @@
+BasedOnStyle: WebKit
+IndentWidth: 3
+AlignConsecutiveAssignments: Consecutive
+ColumnLimit: 100
