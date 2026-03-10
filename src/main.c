@@ -7,37 +7,29 @@
 
 #include "uiohook.h"
 
-typedef enum
-{
-   MOUSE_BTN_UNSET = 0,
-   MOUSE_BTN_LEFT  = 1,
-   MOUSE_BTN_RIGHT = 2,
-} mouse_btn_t;
-
 typedef struct
 {
-   mouse_btn_t mouse_btn;
+   uint16_t mouse_btn; /* uiohook btn */
    unsigned int interval;
 } auc_t;
 
-volatile int mouse_x      = 0;
-volatile int mouse_y      = 0;
-volatile bool is_clicking = false;
-volatile bool is_running  = true;
-auc_t settings            = { .mouse_btn = MOUSE_BTN_UNSET, .interval = 100 };
+volatile int g_mouse_x      = 0;
+volatile int g_mouse_y      = 0;
+volatile bool g_is_clicking = false;
+volatile bool g_is_running  = true;
 
 void *
 clicker_thread (void *arg)
 {
    auc_t *cfg = (auc_t *)arg;
-   while (is_running)
+   while (g_is_running)
       {
-         if (is_clicking)
+         if (g_is_clicking)
             {
                uiohook_event event     = { .type = EVENT_MOUSE_PRESSED };
                event.data.mouse.button = (uint16_t)cfg->mouse_btn;
-               event.data.mouse.x      = (int16_t)mouse_x;
-               event.data.mouse.y      = (int16_t)mouse_y;
+               event.data.mouse.x      = (int16_t)g_mouse_x;
+               event.data.mouse.y      = (int16_t)g_mouse_y;
 
                hook_post_event (&event);
                event.type = EVENT_MOUSE_RELEASED;
@@ -60,23 +52,26 @@ listener (uiohook_event *const event)
       {
       case EVENT_MOUSE_MOVED:
       case EVENT_MOUSE_DRAGGED:
-         mouse_x = event->data.mouse.x;
-         mouse_y = event->data.mouse.y;
+         g_mouse_x = event->data.mouse.x;
+         g_mouse_y = event->data.mouse.y;
          break;
       case EVENT_KEY_PRESSED:
          if (event->data.keyboard.keycode == VC_F6)
             {
-               is_clicking = !is_clicking;
+               g_is_clicking = !g_is_clicking;
                printf ("[STATUS] %s\n",
-                       (is_clicking) ? "CLICKING NOW" : "STOPPED CLICKING");
+                       (g_is_clicking) ? "CLICKING NOW" : "STOPPED CLICKING");
                fflush (stdout);
             }
          if (event->data.keyboard.keycode == VC_ESCAPE)
             {
                printf ("[STATUS] EXITING...\n");
-               is_running = false;
+               g_is_running = false;
                hook_stop ();
             }
+         break;
+      default:
+         /* NOTHING */
          break;
       }
 }
@@ -88,7 +83,7 @@ run_auc (auc_t *auc)
    pthread_create (&thread_id, NULL, clicker_thread, auc);
    hook_set_dispatch_proc (listener);
    hook_run ();
-   is_running = false;
+   g_is_running = false;
    pthread_join (thread_id, NULL);
 }
 
@@ -190,10 +185,10 @@ parse_arguments (int argc, char **argv, auc_t *settings)
                      print_info ();
                      return 0;
                   case FLAG_LEFT:
-                     settings->mouse_btn = MOUSE_BTN_LEFT;
+                     settings->mouse_btn = 1;
                      break;
                   case FLAG_RIGHT:
-                     settings->mouse_btn = MOUSE_BTN_RIGHT;
+                     settings->mouse_btn = 2;
                      break;
                   default:
                      fprintf (stderr,
@@ -204,13 +199,37 @@ parse_arguments (int argc, char **argv, auc_t *settings)
             }
          else
             {
-               settings->interval = (unsigned int)atoi (argv[i]);
+               char *endptr;
+               unsigned long interval = strtoul (argv[i], &endptr, 10);
+               if (*endptr != '\0' || endptr == argv[i])
+                  {
+                     fprintf (stderr,
+                              "[ERROR] '%s' IS NOT A VALID POSITIVE INTEGER, "
+                              "USE --HELP\n",
+                              argv[i]);
+                     return -1;
+                  }
+               if (interval < 100)
+                  {
+                     fprintf (stderr,
+                              "[WARNING] YOU TRIED TO SET THE INTERVAL TO "
+                              "'%zu'. IT MAY CAUSE SYSTEM INSTABILITY. I "
+                              "HAVE SET IT TO 100\n",
+                              interval);
+                     interval = 100;
+                  }
+	       settings->interval = interval;
             }
       }
 
-   if (settings->mouse_btn == MOUSE_BTN_UNSET)
+   if (settings->mouse_btn == 0)
       {
          fprintf (stderr, "[ERROR] MOUSE BUTTON NOT SPECIFIED, USE --HELP\n");
+         return -1;
+      }
+   if (settings->interval < 100)
+      {
+         fprintf (stderr, "[ERROR] INTERVAL WAS NOT PROVIDED, USE --HELP\n");
          return -1;
       }
 
@@ -221,9 +240,10 @@ int
 main (int argc, char **argv)
 {
    auc_t settings = {
-      .mouse_btn = MOUSE_BTN_UNSET,
-      .interval  = 100,
+      .mouse_btn = 0,
+      .interval  = 0,
    };
+   
    int result = parse_arguments (argc, argv, &settings);
    if (result <= 0)
       {
