@@ -63,6 +63,10 @@ You may now use the generated binary `auc`
 [source,shell]
 ----
 % ./auc --right 200 50
+[STATUS] AUC STARTED.
+   *  INTERVAL -- 200
+   *  CLICKS PER INTERVAL -- 50
+   *  PRESS F6 TO TOGGLE
 ----
 
 == LICENSE
