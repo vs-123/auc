@@ -1,6 +1,10 @@
 = AUC
 
-A dead-simple auto-clicker in C11. This project uses libuiohook for I/O hooks.
+*auc* is a high-performance, lightweight auto-clicker implemented in C11. This project uses `libuiohook` library to interact with native input events directly at the operating system level.
+
+*auc* provides a robust, low-latency framework for automating mouse interactions across the entire desktop environment. You are given choice to customise the click frequency with millisecond-precision intervals.
+
+Additionally, the application supports burst-clicking and allows you to define the exact number of mouse clicks executed per interval.
 
 == BUILD INSTRUCTIONS
 
