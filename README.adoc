@@ -1,0 +1,40 @@
+= AUC
+
+A dead-simple auto-clicker in C11. This project uses libuiohook for I/O hooks.
+
+== BUILD INSTRUCTIONS
+
+*PREREQUISITES:*
+* Standard C11-compliant compiler
+* CMake
+* libuiohook
+
+Obtain a local copy of this repository
+[source,shell]
+----
+%  git clone https://github.com/vs-123/auc.git
+----
+
+Create a `build/` directory inside the project root and use  to build
+[source,shell]
+----
+%  cd auc
+%  mkdir build
+%  cmake ..
+%  cmake --build .
+----
+
+You may execute the generated binary `auc`
+[source,shell]
+----
+%  ./auc --help
+----
+
+== LICENSE
+
+This project is licensed under the GNU Affero General Public License version 3.0 or later.
+
+*NO WARRANTY PROVIDED*
+
+For full terms, visit https://www.gnu.org/licenses/agpl-3.0.en.html.
+
