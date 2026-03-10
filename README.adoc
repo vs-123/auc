@@ -41,7 +41,7 @@ Create a `build/` directory inside the project root and use  to build
 %  cmake --build .
 ----
 
-You may execute the generated binary `auc`
+You may now use the generated binary `auc`
 [source,shell]
 ----
 %  ./auc --help
