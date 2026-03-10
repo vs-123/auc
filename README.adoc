@@ -1,10 +1,22 @@
+:em: {sp}--{sp}
+
 = AUC
 
-*auc* is a high-performance, lightweight auto-clicker implemented in C11. This project uses `libuiohook` library to interact with native input events directly at the operating system level.
+*auc* is a high-performance, lightweight, cross-platform, thread-safe and dependency-minimal auto-clicker written in C11. This project utilises `libuiohook` library to interact with native input events directly at the operating system level, which in turn provides a robust, low-latency framework for automating mouse interactions across the entire desktop environment. 
 
-*auc* provides a robust, low-latency framework for automating mouse interactions across the entire desktop environment. You are given choice to customise the click frequency with millisecond-precision intervals.
+== FEATURES
 
-Additionally, the application supports burst-clicking and allows you to define the exact number of mouse clicks executed per interval.
+* **[NATIVE INPUT HANDLING]** {em} Uses `libuiohook` to intercept and inject mouse events directly at the operating system level for high-precision, low-latency performance
+
+* **[THREADED EXECUTION]** {em} Operates with a dedicated background thread for click execution. This keeps it entirely decoupled from the main input-listening loop and hence ensures maximum responsiveness.
+
+* **[ATOMIC CONCURRENCY]** {em} Manages state across threads with C11 `<stdatomic.h>` primitives. This prevents race conditions and ensures stability during high-frequency operations.
+
+* **[BURST CLICKING]** {em} Allows you to define specific click counts per iteration. This allows for burst clicks instead of ordinary clicks. For example, when you set this to `100` and set an interval of `1` second, *auc* would click a hundred times per second.
+
+* **[PRECISE TIMING]** {em} Allows you to set intervals between bursts upto millisecond-precision. This feature is provided via the flexible case-insensitive command-line interface.
+
+* **[HOTKEY TRIGGER]** {em} Uses `F6` as the hotkey to toggle the auto-clicker. An emergency hotkey `ESC` is provided for immediate termination.
 
 == BUILD INSTRUCTIONS
 

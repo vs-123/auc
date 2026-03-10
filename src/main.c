@@ -50,7 +50,7 @@ clicker_thread (void *arg)
             }
          else
             {
-               usleep (50000);
+               usleep (100 * 1000);
             }
       }
    return NULL;
