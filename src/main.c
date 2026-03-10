@@ -12,6 +12,7 @@ typedef struct
 {
    uint16_t mouse_btn; /* uiohook btn */
    unsigned int interval;
+   unsigned int clicks_per_iter;
    atomic_int mouse_x;
    atomic_int mouse_y;
    atomic_bool is_clicking;
@@ -67,8 +68,7 @@ listener (uiohook_event *const event)
             {
                bool is_clicking = atomic_load (&g_ctx->is_clicking);
                atomic_store (&g_ctx->is_clicking, !is_clicking);
-               printf ("[STATUS] %s\n",
-                       (is_clicking) ? "CLICKING NOW" : "STOPPED CLICKING");
+               printf ("[STATUS] %s\n", (is_clicking) ? "CLICKING NOW" : "STOPPED CLICKING");
                fflush (stdout);
             }
          if (event->data.keyboard.keycode == VC_ESCAPE)
@@ -100,7 +100,7 @@ void
 print_usage (const char *program_name)
 {
 #define popt(opt, desc) printf ("    %-45s %s\n", opt, desc)
-   printf ("[USAGE] %s [FLAGS] <INTERVAL_MS>\n", program_name);
+   printf ("[USAGE] %s [FLAGS] <INTERVAL_MS> <CLICKS_PER_ITER>\n", program_name);
    printf ("[DESC.] TODO\n");
    printf ("[FLAGS]\n");
    popt ("--HELP, -H, -?", "PRINT THIS HELP MESSAGE AND EXIT");
@@ -119,8 +119,7 @@ print_info (void)
    printf ("    AUC -- TODO\n\n");
    pinfo ("[AUTHOR]", "vs-123 @ https://github.com/vs-123");
    pinfo ("[REPOSITORY]", "https://github.com/vs-123/auc");
-   pinfo ("[LICENSE]",
-          "GNU AFFERO GENERAL PUBLIC LICENSE VERSION 3.0 OR LATER");
+   pinfo ("[LICENSE]", "GNU AFFERO GENERAL PUBLIC LICENSE VERSION 3.0 OR LATER");
 #undef pinfo
 }
 
@@ -153,8 +152,7 @@ strcmpci (char const *str1, char const *str2)
 {
    for (;;)
       {
-         int cmp
-             = tolower ((unsigned char)*str1) - tolower ((unsigned char)*str2);
+         int cmp = tolower ((unsigned char)*str1) - tolower ((unsigned char)*str2);
          if (*str1 == '\0' || cmp != 0)
             {
                return cmp;
@@ -180,6 +178,8 @@ get_flag (const char *arg)
 int
 parse_arguments (int argc, char **argv, auc_t *settings)
 {
+   unsigned int positional_count = 0;
+
    for (int i = 1; i < argc; i++)
       {
          if (argv[i][0] == '-')
@@ -200,16 +200,15 @@ parse_arguments (int argc, char **argv, auc_t *settings)
                      settings->mouse_btn = 2;
                      break;
                   default:
-                     fprintf (stderr,
-                              "[ERROR] UNRECOGNISED FLAG '%s', USE --HELP\n",
-                              argv[i]);
+                     fprintf (stderr, "[ERROR] UNRECOGNISED FLAG '%s', USE --HELP\n", argv[i]);
                      return -1;
                   }
             }
          else
             {
                char *endptr;
-               unsigned long interval = strtoul (argv[i], &endptr, 10);
+               unsigned long val = strtoul (argv[i], &endptr, 10);
+
                if (*endptr != '\0' || endptr == argv[i])
                   {
                      fprintf (stderr,
@@ -218,16 +217,38 @@ parse_arguments (int argc, char **argv, auc_t *settings)
                               argv[i]);
                      return -1;
                   }
-               if (interval < 100)
+
+               if (positional_count == 0)
                   {
-                     fprintf (stderr,
-                              "[WARNING] YOU TRIED TO SET THE INTERVAL TO "
-                              "'%zu'. IT MAY CAUSE SYSTEM INSTABILITY. I "
-                              "HAVE SET IT TO 100\n",
-                              interval);
-                     interval = 100;
+                     if (val < 100)
+                        {
+                           fprintf (stderr, "[WARNING]\n");
+                           fprintf (stderr, "   * YOU TRIED TO SET INTERVAL TO '%zu'\n", val);
+                           fprintf (stderr, "   * IT MAY CAUSE SYSTEM INSTABILITY\n");
+                           fprintf (stderr, "   * I HAVE SET IT TO 100\n");
+                           val = 100;
+                        }
+                     settings->interval = val;
                   }
-               settings->interval = interval;
+               else if (positional_count == 1)
+                  {
+                     if (val < 1)
+                        {
+                           fprintf (stderr, "[WARNING]\n");
+                           fprintf (stderr, "   * YOU TRIED TO SET CLICKS PER INTERVAL TO '%zu'\n", val);
+                           fprintf (stderr, "   * THIS WOULD NOT MAKE ANY CLICKS\n");
+                           fprintf (stderr, "   * I HAVE SET IT TO 1\n");
+                           val = 1;
+                        }
+                     settings->clicks_per_iter = val;
+                  }
+               else
+                  {
+                     fprintf (stderr, "[ERROR] TOO MANY ARGUMENTS PROVIDED.\n");
+                     return -1;
+                  }
+
+               positional_count++;
             }
       }
 
@@ -243,6 +264,16 @@ parse_arguments (int argc, char **argv, auc_t *settings)
          return -1;
       }
 
+   if (settings->clicks_per_iter < 1)
+      {
+         fprintf (stderr, "[ERROR] CLICKS PER INTERVAL WAS NOT PROVIDED, USE --HELP\n");
+         return -1;
+      }
+
+   if (settings->clicks_per_iter == 0) {
+      settings->clicks_per_iter = 1;
+   }
+
    return 1;
 }
 
@@ -250,12 +281,13 @@ int
 main (int argc, char **argv)
 {
    auc_t settings = {
-      .mouse_btn   = 0,
-      .interval    = 0,
-      .is_clicking = false,
-      .is_running  = true,
-      .mouse_x     = 0,
-      .mouse_y     = 0,
+      .mouse_btn       = 0,
+      .interval        = 0,
+      .clicks_per_iter = 0,
+      .is_clicking     = false,
+      .is_running      = true,
+      .mouse_x         = 0,
+      .mouse_y         = 0,
    };
    g_ctx = &settings;
 

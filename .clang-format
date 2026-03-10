@@ -5,5 +5,5 @@ AllowShortFunctionsOnASingleLine: false
 InsertBraces: true
 PointerAlignment: Right
 IndentWidth: 3
-ColumnLimit: 80
+ColumnLimit: 100
 
