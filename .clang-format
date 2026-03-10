@@ -1,4 +1,9 @@
-BasedOnStyle: WebKit
+BasedOnStyle: GNU
+AlignConsecutiveMacros: true
+AlignConsecutiveAssignments: true
+AllowShortFunctionsOnASingleLine: false
+InsertBraces: true
+PointerAlignment: Right
 IndentWidth: 3
-AlignConsecutiveAssignments: Consecutive
-ColumnLimit: 100
+ColumnLimit: 80
+
