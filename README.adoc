@@ -47,6 +47,24 @@ You may now use the generated binary `auc`
 %  ./auc --help
 ----
 
+== CLI
+
+*auc* uses a simple positional argument system combined with optional flags.
+
+[source,shell]
+----
+% ./auc [FLAGS] <INTERVAL_MS> <CLICKS_PER_ITER>
+----
+
+* *<INTERVAL_MS>* {em} The delay between click-bursts in milliseconds (minimum 100ms).
+* *<CLICKS_PER_ITER>* {em} The number of individual clicks executed during one interval (minimum 1).
+
+*[EXAMPLE]* To perform `50` right-clicks every `200` milliseconds:
+[source,shell]
+----
+% ./auc --right 200 50
+----
+
 == LICENSE
 
 This project is licensed under the GNU Affero General Public License version 3.0 or later.
