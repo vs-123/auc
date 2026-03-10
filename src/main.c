@@ -113,7 +113,7 @@ print_usage (const char *program_name)
 {
 #define popt(opt, desc) printf ("    %-45s %s\n", opt, desc)
    printf ("[USAGE] %s [FLAGS] <INTERVAL_MS> <CLICKS_PER_ITER>\n", program_name);
-   printf ("[DESC.] TODO\n");
+   printf ("[DESC.] AUC IS A HIGH-PERFORMANCE, THREAD-SAFE AUTO-CLICKER\n");
    printf ("[FLAGS]\n");
    popt ("--HELP, -H, -?", "PRINT THIS HELP MESSAGE AND EXIT");
    popt ("--INFO, -I", "PRINT INFORMATION ABOUT THIS PROGRAM AND EXIT");
@@ -129,7 +129,7 @@ print_info (void)
 {
 #define pinfo(aspect, detail) printf ("    * %-17s %s\n", aspect, detail)
    printf ("[INFO]\n");
-   printf ("    AUC -- TODO\n\n");
+   printf ("    AUC -- A HIGH-PERFORMANCE, LIGHTWEIGHT, CROSS-PLATFORM, THREAD-SAFE AND DEPENDENCY-MINIMAL AUTO-CLICKER WRITTEN IN C11\n\n");
    pinfo ("[AUTHOR]", "vs-123 @ https://github.com/vs-123");
    pinfo ("[REPOSITORY]", "https://github.com/vs-123/auc");
    pinfo ("[LICENSE]", "GNU AFFERO GENERAL PUBLIC LICENSE VERSION 3.0 OR LATER");
