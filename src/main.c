@@ -16,6 +16,7 @@ typedef struct
    uint16_t mouse_btn; /* uiohook btn */
    unsigned int interval;
    unsigned int clicks_per_iter;
+   bool print_warnings;
    atomic_int mouse_x;
    atomic_int mouse_y;
    atomic_bool is_clicking;
@@ -32,14 +33,18 @@ clicker_thread (void *arg)
       {
          if (cfg->is_clicking)
             {
-               uiohook_event event     = { .type = EVENT_MOUSE_PRESSED };
-               event.data.mouse.button = (uint16_t)cfg->mouse_btn;
-               event.data.mouse.x      = (int16_t)cfg->mouse_x;
-               event.data.mouse.y      = (int16_t)cfg->mouse_y;
+               uiohook_event event;
 
-               hook_post_event (&event);
-               event.type = EVENT_MOUSE_RELEASED;
-               hook_post_event (&event);
+               for (unsigned int i = 0; i < cfg->clicks_per_iter; i++)
+                  {
+                     event                   = (uiohook_event){ .type = EVENT_MOUSE_PRESSED };
+                     event.data.mouse.button = (uint16_t)cfg->mouse_btn;
+                     event.data.mouse.x      = (int16_t)cfg->mouse_x;
+                     event.data.mouse.y      = (int16_t)cfg->mouse_y;
+                     hook_post_event (&event);
+                     event.type = EVENT_MOUSE_RELEASED;
+                     hook_post_event (&event);
+                  }
 
                usleep (cfg->interval * 1000);
             }
@@ -90,7 +95,11 @@ listener (uiohook_event *const event)
 void
 run_auc (auc_t *auc)
 {
-   printf ("[STATUS] AUC STARTED, PRESS F6 TO TOGGLE\n");
+   printf ("[STATUS] AUC STARTED.\n");
+   printf ("   *  INTERVAL -- %u\n", auc->interval);
+   printf ("   *  CLICKS PER INTERVAL -- %u\n", auc->clicks_per_iter);
+   printf ("   *  PRESS F6 TO TOGGLE\n");
+
    pthread_t thread_id;
    pthread_create (&thread_id, NULL, clicker_thread, auc);
    hook_set_dispatch_proc (listener);
@@ -110,6 +119,7 @@ print_usage (const char *program_name)
    popt ("--INFO, -I", "PRINT INFORMATION ABOUT THIS PROGRAM AND EXIT");
    popt ("--LEFT, -L", "USE LEFT MOUSE BUTTON");
    popt ("--RIGHT, -R", "USE RIGHT MOUSE BUTTON");
+   popt ("--NO-WARN, -W", "DISABLE WARNINGS");
    printf ("[NOTE] FLAGS ARE NOT CASE-SENSITIVE\n");
 #undef popt
 }
@@ -133,6 +143,7 @@ typedef enum
    FLAG_INFO,
    FLAG_LEFT,
    FLAG_RIGHT,
+   FLAG_NOWARN,
    FLAG_UNKNOWN
 } flag_type_t;
 
@@ -144,10 +155,9 @@ typedef struct
 } flag_map_t;
 
 const flag_map_t flag_table[] = {
-   { "-h", "--help", FLAG_HELP },
-   { "-i", "--info", FLAG_INFO },
-   { "-l", "--left", FLAG_LEFT },
-   { "-r", "--right", FLAG_RIGHT },
+   { "-h", "--help", FLAG_HELP },      { "-i", "--info", FLAG_INFO },
+   { "-l", "--left", FLAG_LEFT },      { "-r", "--right", FLAG_RIGHT },
+   { "-w", "--no-warn", FLAG_NOWARN },
 };
 
 int
@@ -202,7 +212,13 @@ parse_arguments (int argc, char **argv, auc_t *settings)
                   case FLAG_RIGHT:
                      settings->mouse_btn = 2;
                      break;
-                  default:
+                  case FLAG_NOWARN:
+                     settings->print_warnings = false;
+                     break;
+                  case FLAG_NONE:
+                     fprintf (stderr, "[SECRET ENDING]\nCONGRATULATIONS, YOU HAVE FOUND THE SECRET ENDING.\nANYWAYS, USE --HELP\n");
+                     return -1;
+                  case FLAG_UNKNOWN:
                      fprintf (stderr, "[ERROR] UNRECOGNISED FLAG '%s', USE --HELP\n", argv[i]);
                      return -1;
                   }
@@ -225,11 +241,14 @@ parse_arguments (int argc, char **argv, auc_t *settings)
                   {
                      if (val < 100)
                         {
-                           fprintf (stderr, "[WARNING]\n");
-                           fprintf (stderr, "   * YOU TRIED TO SET INTERVAL TO '%zu'\n", val);
-                           fprintf (stderr, "   * IT MAY CAUSE SYSTEM INSTABILITY\n");
-                           fprintf (stderr, "   * I HAVE SET IT TO %d\n", MINIMUM_INTERVAL);
                            val = 100;
+                           if (settings->print_warnings)
+                              {
+                                 fprintf (stderr, "[WARNING]\n");
+                                 fprintf (stderr, "   * YOU TRIED TO SET INTERVAL TO '%zu'\n", val);
+                                 fprintf (stderr, "   * IT MAY CAUSE SYSTEM INSTABILITY\n");
+                                 fprintf (stderr, "   * I HAVE SET IT TO %d\n", MINIMUM_INTERVAL);
+                              }
                         }
                      settings->interval = val;
                   }
@@ -237,13 +256,17 @@ parse_arguments (int argc, char **argv, auc_t *settings)
                   {
                      if (val < 1)
                         {
-                           fprintf (stderr, "[WARNING]\n");
-                           fprintf (stderr, "   * YOU TRIED TO SET CLICKS PER INTERVAL TO '%zu'\n",
-                                    val);
-                           fprintf (stderr, "   * THIS WOULD NOT MAKE ANY CLICKS\n");
-                           fprintf (stderr, "   * I HAVE SET IT TO %d\n",
-                                    MINIMUM_CLICKS_PER_INTERVAL);
                            val = 1;
+                           if (settings->print_warnings)
+                              {
+                                 fprintf (stderr, "[WARNING]\n");
+                                 fprintf (stderr,
+                                          "   * YOU TRIED TO SET CLICKS PER INTERVAL TO '%zu'\n",
+                                          val);
+                                 fprintf (stderr, "   * THIS WOULD NOT MAKE ANY CLICKS\n");
+                                 fprintf (stderr, "   * I HAVE SET IT TO %d\n",
+                                          MINIMUM_CLICKS_PER_INTERVAL);
+                              }
                         }
                      settings->clicks_per_iter = val;
                   }
@@ -296,6 +319,7 @@ main (int argc, char **argv)
       .is_running      = true,
       .mouse_x         = 0,
       .mouse_y         = 0,
+      .print_warnings  = true,
    };
 
    g_ctx = &settings;
