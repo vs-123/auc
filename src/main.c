@@ -8,6 +8,9 @@
 
 #include "uiohook.h"
 
+#define MINIMUM_CLICKS_PER_INTERVAL 1
+#define MINIMUM_INTERVAL            100
+
 typedef struct
 {
    uint16_t mouse_btn; /* uiohook btn */
@@ -225,7 +228,7 @@ parse_arguments (int argc, char **argv, auc_t *settings)
                            fprintf (stderr, "[WARNING]\n");
                            fprintf (stderr, "   * YOU TRIED TO SET INTERVAL TO '%zu'\n", val);
                            fprintf (stderr, "   * IT MAY CAUSE SYSTEM INSTABILITY\n");
-                           fprintf (stderr, "   * I HAVE SET IT TO 100\n");
+                           fprintf (stderr, "   * I HAVE SET IT TO %d\n", MINIMUM_INTERVAL);
                            val = 100;
                         }
                      settings->interval = val;
@@ -235,9 +238,11 @@ parse_arguments (int argc, char **argv, auc_t *settings)
                      if (val < 1)
                         {
                            fprintf (stderr, "[WARNING]\n");
-                           fprintf (stderr, "   * YOU TRIED TO SET CLICKS PER INTERVAL TO '%zu'\n", val);
+                           fprintf (stderr, "   * YOU TRIED TO SET CLICKS PER INTERVAL TO '%zu'\n",
+                                    val);
                            fprintf (stderr, "   * THIS WOULD NOT MAKE ANY CLICKS\n");
-                           fprintf (stderr, "   * I HAVE SET IT TO 1\n");
+                           fprintf (stderr, "   * I HAVE SET IT TO %d\n",
+                                    MINIMUM_CLICKS_PER_INTERVAL);
                            val = 1;
                         }
                      settings->clicks_per_iter = val;
@@ -258,21 +263,24 @@ parse_arguments (int argc, char **argv, auc_t *settings)
          return -1;
       }
 
-   if (settings->interval < 100)
+   /* THESE WILL ONLY TRIGGER WHEN FLAG NOT PROVIDED */
+
+   if (settings->interval < MINIMUM_INTERVAL)
       {
          fprintf (stderr, "[ERROR] INTERVAL WAS NOT PROVIDED, USE --HELP\n");
          return -1;
       }
 
-   if (settings->clicks_per_iter < 1)
+   if (settings->clicks_per_iter < MINIMUM_CLICKS_PER_INTERVAL)
       {
          fprintf (stderr, "[ERROR] CLICKS PER INTERVAL WAS NOT PROVIDED, USE --HELP\n");
          return -1;
       }
 
-   if (settings->clicks_per_iter == 0) {
-      settings->clicks_per_iter = 1;
-   }
+   if (settings->clicks_per_iter == 0)
+      {
+         settings->clicks_per_iter = 1;
+      }
 
    return 1;
 }
@@ -289,6 +297,7 @@ main (int argc, char **argv)
       .mouse_x         = 0,
       .mouse_y         = 0,
    };
+
    g_ctx = &settings;
 
    int result = parse_arguments (argc, argv, &settings);
