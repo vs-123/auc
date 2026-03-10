@@ -5,6 +5,7 @@ A dead-simple auto-clicker in C11. This project uses libuiohook for I/O hooks.
 == BUILD INSTRUCTIONS
 
 *PREREQUISITES:*
+
 * Standard C11-compliant compiler
 * CMake
 * libuiohook
